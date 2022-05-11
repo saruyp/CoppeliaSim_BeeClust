@@ -10,7 +10,7 @@
         --//  to other robots with its color led.
         --//  
         --////////////////////////////////////////////////////////////////////////////////////
-            --sim.addStatusbarMessage(sim.getScriptName(sim.handle_self).." ambient light:"..get_ambient_light())
+            sim.addStatusbarMessage(sim.getScriptName(sim.handle_self).." ambient light:"..get_ambient_light())
             local collision, dist, dp = sim.readProximitySensor(sensorHandle)
             local result, distance, detectedPoint = sim.checkProximitySensor(sensorHandle,senderHandle)
             --print(sim.getSimulationTime())
@@ -22,7 +22,11 @@
 				distance= distance + half_diam
 				-- if the obstacle is another robot, light up the robot	
 				if(distance < 90) then
-					set_motion(DIR_STOP)
+                    set_motion(DIR_STOP)
+                    waitalgorithm()
+                    --WAIT()
+					--choice()
+                    --STRAIGHT
                 elseif(distance > 90) then
                     set_motion(DIR_STRAIGHT)
 				else
@@ -33,9 +37,8 @@
                 if (dist ~= nil) then
                     dist = dist + half_diam --0.0165 -- half_diameter of the robot base
                     if (dist < 0.0665) then
-                        --print(choice())
                         choice()
-                        end
+                        --STRAIGHT
                     else
                         return
                     end
@@ -51,6 +54,24 @@
         
         -------------------------------------------------------------------------------------------------------------------------------------------
         -------------------------------------------------------------------------------------------------------------------------------------------
+        
+        
+        function waitalgorithm()
+        --Kilobot ambient light:0.38039216399193
+        --89.665541366229
+        
+        --Kilobot ambient light:0.99215686321259
+        --95.763493544628
+            --light minimum = 0.36078432202339 ??
+            wmax = 100 -- maximum waiting time
+            emax = 1 -- maximum sensor value
+            exyz= get_ambient_light() -- ambient light value
+            offset = 1
+            steepness = 90 * (3.14/180)
+            e = 2.71
+            wt = (wmax/(1+(e^-((exyz + offset)*steepness))))
+            return (math.floor(wt))
+        end
         --choicevariable = sim.getBoolParam(choice())
         function choice()
         --DIR_STOP = 0
@@ -61,7 +82,7 @@
             local choice = math.random(2)
             if (direction_prev == 1) then
                 if choice == 1 then
-                    set_motion(DIR_LEFT) 
+                    set_motion(DIR_LEFT)
                 elseif choice == 2 then
                     set_motion(DIR_RIGHT)
                 end
@@ -85,3 +106,4 @@
             end
             set_motion(DIR_STRAIGHT)
         end
+        
