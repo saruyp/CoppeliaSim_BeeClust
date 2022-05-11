@@ -1,0 +1,87 @@
+        function loop()
+        --/////////////////////////////////////////////////////////////////////////////////////
+        --//user program code goes below.  this code needs to exit in a resonable amount of time
+        --//so the special message controller can also run
+        --/////////////////////////////////////////////////////////////////////////////////////
+    
+        --/////////////////////////////////////////////////////////////////////////////////////
+        --//
+        --//  In the example below, the robot moves and display its distance 
+        --//  to other robots with its color led.
+        --//  
+        --////////////////////////////////////////////////////////////////////////////////////
+            --sim.addStatusbarMessage(sim.getScriptName(sim.handle_self).." ambient light:"..get_ambient_light())
+            local collision, dist, dp = sim.readProximitySensor(sensorHandle)
+            local result, distance, detectedPoint = sim.checkProximitySensor(sensorHandle,senderHandle)
+            --print(sim.getSimulationTime())
+            --print(dist)
+            --print(distance)
+            --ccw or cw = 7.8431372642517
+            
+            if (distance ~= nil)  then 
+				distance= distance + half_diam
+				-- if the obstacle is another robot, light up the robot	
+				if(distance < 90) then
+					set_motion(DIR_STOP)
+                elseif(distance > 90) then
+                    set_motion(DIR_STRAIGHT)
+				else
+					return
+				end
+			else
+                set_motion(DIR_STRAIGHT)
+                if (dist ~= nil) then
+                    dist = dist + half_diam --0.0165 -- half_diameter of the robot base
+                    if (dist < 0.0665) then
+                        --print(choice())
+                        choice()
+                        end
+                    else
+                        return
+                    end
+                else
+                    return
+                end
+            end
+            --blink(0, 1, 0)
+        --////////////////////////////////////////////////////////////////////////////////////
+        --//END OF USER CODE
+        --////////////////////////////////////////////////////////////////////////////////////
+        end
+        
+        -------------------------------------------------------------------------------------------------------------------------------------------
+        -------------------------------------------------------------------------------------------------------------------------------------------
+        --choicevariable = sim.getBoolParam(choice())
+        function choice()
+        --DIR_STOP = 0
+        --DIR_STRAIGHT = 1
+        --DIR_LEFT = 2
+        --DIR_RIGHT = 3
+            array={DIR_LEFT,DIR_RIGHT}
+            local choice = math.random(2)
+            if (direction_prev == 1) then
+                if choice == 1 then
+                    set_motion(DIR_LEFT) 
+                elseif choice == 2 then
+                    set_motion(DIR_RIGHT)
+                end
+            elseif (direction_prev == 2) then
+                set_motion(DIR_LEFT)
+            elseif (direction_prev == 3) then
+                set_motion(DIR_RIGHT)
+            else
+                return
+            end
+        end
+        function moving_time()
+            local simTime=sim.getSimulationTime()
+            local simTimeStep=sim.getSimulationTimeStep()
+            local ccw=sim.getJointTargetVelocity(RightMotorHandle)
+            local cw=sim.getJointTargetVelocity(LeftMotorHandle)
+            st = sim.getSimulationTime()
+            start = sim.getSimulationTime()
+            while sim.getSimulationTime() < (st + 0.5) do
+                sim.switchThread()
+            end
+            set_motion(DIR_STRAIGHT)
+        end
