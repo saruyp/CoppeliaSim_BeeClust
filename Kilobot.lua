@@ -135,8 +135,12 @@ if (sim_call_type==sim.syscb_actuation) then
         --global variables
         -------------------------------------------------------------------------------------------------------------------------------------------
         
+        rt = 0
+        at = 0
         st = 0
-        
+        kt ={}
+        et = true
+        --ut = 0
         
         -------------------------------------------------------------------------------------------------------------------------------------------
         -- Functions similar to C API
@@ -190,7 +194,7 @@ if (sim_call_type==sim.syscb_actuation) then
             --print(dist)
             --print(distance)
             --ccw or cw = 7.8431372642517
-            
+            --print(direction)
             if (distance ~= nil)  then 
 				distance= distance + half_diam
 				-- if the obstacle is another robot, light up the robot	
@@ -200,23 +204,27 @@ if (sim_call_type==sim.syscb_actuation) then
                     --WAIT()
 					--choice()
                     --STRAIGHT
-                elseif(distance > 90) then
-                    set_motion(DIR_STRAIGHT)
+                --elseif(distance > 90) then
+                  --  set_motion(DIR_STRAIGHT)
 				else
 					return
 				end
-			else
+			elseif (distance == nil) then
+                st = 0
                 set_motion(DIR_STRAIGHT)
                 if (dist ~= nil) then
                     dist = dist + half_diam --0.0165 -- half_diameter of the robot base
-                    if (dist < 0.0665) then
-                        choice()
-                        --STRAIGHT
+                    if (dist < 0.0800) then
+                        --choice()
+                        moving_wall()
                     else
                         return
                     end
-                else
-                    return
+                elseif (dist == nil) then
+                    rt=0
+                    at=0
+                    kt={}
+                    et=true
                 end
             end
             --blink(0, 1, 0)
@@ -245,57 +253,57 @@ if (sim_call_type==sim.syscb_actuation) then
             wt = (wmax/(1+(e^-((exyz + offset)*steepness))))
             return (math.floor(wt))
         end
-        --choicevariable = sim.getBoolParam(choice())
+        
         function choice()
+        --choicevariable = sim.getBoolParam(choice())
         --DIR_STOP = 0
         --DIR_STRAIGHT = 1
         --DIR_LEFT = 2
         --DIR_RIGHT = 3
-            --array={DIR_LEFT,DIR_RIGHT}
-            local choice = math.random(2)
-            if (direction_prev == 1) then
-                if choice == 1 then
+            if et == true then
+                local choice = math.random(2)
+                if (direction_prev == 1) or (direction_prev == 0) then
+                    if choice == 1 then
+                        set_motion(DIR_LEFT)
+                    elseif choice == 2 then
+                        set_motion(DIR_RIGHT)
+                    end
+                elseif (direction_prev == 2) then
                     set_motion(DIR_LEFT)
-                elseif choice == 2 then
+                elseif (direction_prev == 3) then
                     set_motion(DIR_RIGHT)
                 end
-            elseif (direction_prev == 2) then
+            elseif et == false then
                 set_motion(DIR_LEFT)
-            elseif (direction_prev == 3) then
-                set_motion(DIR_RIGHT)
-            elseif (direction_prev == 0) then
-                if choice == 1 then
-                    set_motion(DIR_LEFT)
-                elseif choice == 2 then
-                    set_motion(DIR_RIGHT)
-                end
             end
         end
+        
         function moving_time()
-            --local simTime=sim.getSimulationTime()
-            --local simTimeStep=sim.getSimulationTimeStep()
-            --local ccw=sim.getJointTargetVelocity(RightMotorHandle)
-            --local cw=sim.getJointTargetVelocity(LeftMotorHandle)
-            -- 1 tick do st = 1ms
-            -- waitalgorithm() retorna int
-            -- ent?o st >= waitalgorithm() + aprimoramento.
-            wa = waitalgorithm() * 10 -- aprimoramento -- cada tick = 1*10 tick
+            rollrange()
+            wa = waitalgorithm() * 10
             if st >= (wa) then
-                if st < (wa+200) then -- demora 200 pra dar uma volta completa no eixo
+                if st < (wa+at) then -- demora 200 pra dar meia volta
                     st = st + 1
-                    print(st)
-                    choice()
-                elseif (st < (wa+500) and st >= (wa+200)) then
-                    st = st + 1
-                    print(st)
+                    
+                    choice() -- problema 3232323232
+                    checkerror()
+                elseif st >= (wa+at) then
                     set_motion(DIR_STRAIGHT)
-                elseif st >= (wa+500) then
-                    st = 0
                 end
             elseif st < (wa) then
                 st = st + 1
-                print(st)
                 set_motion(DIR_STOP)
+            end
+        end
+        
+        function moving_wall()
+            rollrange()
+            rt = rt + 1
+            if rt >(55) and rt <= (at+55) then
+                choice() -- problema 3232323232
+                checkerror()
+            else
+                set_motion(DIR_STRAIGHT)
             end
         end
         
@@ -307,6 +315,30 @@ if (sim_call_type==sim.syscb_actuation) then
             else
                 return -1
             end
+        end
+        
+        function rollrange()
+            if at == 0 then
+                at = math.random(125,275)
+                return at
+            elseif at ~= 0 then
+                return at
+            end
+        end
+        
+        function checkerror()
+            --print(direction)
+            da = direction
+            table.insert(kt,da)
+            if (kt[1] == kt[2] or kt[2] == nil) then
+                --return true
+                et = true
+            elseif kt[1] ~= kt[2] then
+                --return false
+                et = false
+            end
+            --print(kt)
+            --print(et)
         end
         
         -- Set direction of motion
